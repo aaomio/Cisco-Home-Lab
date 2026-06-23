@@ -8,32 +8,6 @@ no service password-encryption
 !
 hostname SW2
 !
-enable secret 5 $
-enable password $
-!
-username admin privilege 15 secret 5 $
-no aaa new-model
-system mtu routing 1500
-ip subnet-zero
-ip domain-name local.lab
-!
-!
-!
-!
-
-SW2(config)#do show run
-Building configuration...
-
-Current configuration : 2608 bytes
-!
-version 12.2
-no service pad
-service timestamps debug uptime
-service timestamps log uptime
-no service password-encryption
-!
-hostname SW2
-!
 enable secret 5 $1$Rb/g$wMsFM1k/4Q2mgIrQs7OjH/
 enable password @xx7
 !
