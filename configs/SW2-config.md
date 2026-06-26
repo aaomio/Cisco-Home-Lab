@@ -183,15 +183,12 @@ control-plane
 !
 !
 line con 0
+ exec-timeout 0 0
  logging synchronous
 line vty 0 4
- exec-timeout 5 0
- password Darko
  login local
  transport input telnet
 line vty 5 15
- exec-timeout 5 0
- password Darko
  login local
  transport input telnet
 !
