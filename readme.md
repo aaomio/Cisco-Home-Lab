@@ -210,17 +210,4 @@ These ports are configured for voice devices such as IP phones.
 | 40   | 192.168.40.0/24 | 192.168.40.1   |
 | 50   | 192.168.50.0/24 | 192.168.50.1   |
 
----
 
-## Verification Commands
-
-```cisco
-show vlan brief
-show interfaces trunk
-show etherchannel summary
-show spanning-tree
-show ip dhcp binding
-show ip interface brief
-show ip nat translations
-show ip nat statistics
-```
