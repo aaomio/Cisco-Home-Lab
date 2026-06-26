@@ -181,6 +181,7 @@ Fa0/18
 
 These ports are configured for voice devices such as IP phones.
 
+---
 
 ## Remote Management
 
