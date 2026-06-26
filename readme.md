@@ -4,33 +4,36 @@
 
 This project demonstrates the implementation of a small enterprise-style Cisco campus network using a Cisco 1841 router and two Cisco Catalyst 3560 switches.
 
-The lab was built to gain practical experience with core CCNA networking concepts including VLAN segmentation, Router-on-a-Stick (ROAS), DHCP services, trunking, EtherChannel, Spanning Tree Protocol (STP), and remote device management.
+The lab was built to gain practical hands-on experience with core CCNA/CCNP-level networking concepts including VLAN segmentation, Router-on-a-Stick (ROAS), DHCP services, NAT overload, trunking, EtherChannel, Spanning Tree Protocol (STP), port-security, and remote device management.
 
-The topology follows a simplified Access–Distribution design, where SW1 acts as the distribution switch and SW2 serves as the access switch.
+The topology follows a simplified **Access–Distribution design**, where:
+- SW1 acts as the Distribution switch
+- SW2 acts as the Access switch
+- R1 provides Layer 3 routing + Internet NAT via ISP (BT WiFi router)
 
 ---
 
 ## Network Topology
-
-```text
-                    R1 (Cisco 1841)
-                          |
-                     802.1Q Trunk
-                          |
-                     SW1 (3560)
+                BT WiFi (ISP / Internet)
+                           |
+                R1 (Cisco 1841 Router)
+                 Inter-VLAN Routing + NAT
+                           |
+                    802.1Q Trunk Link
+                           |
+                      SW1 (3560)
                  Distribution Layer
-                          |
-                ===================
-                ||   EtherChannel  ||
-                ===================
-                  Fa0/10   Fa0/12
-                          |
-                     SW2 (3560)
+                           |
+                ======================
+                ||  EtherChannel    ||
+                ======================
+                  Fa0/10    Fa0/12
+                           |
+                      SW2 (3560)
                     Access Layer
-                     /        \
-                    /          \
-                 PC1            PC2
-```
+              /       |        |       \
+          VLAN10   VLAN20   VLAN40    VLAN50
+          USERS     STAFF    MEDIA     VOICE
 
 ---
 
@@ -41,200 +44,183 @@ The topology follows a simplified Access–Distribution design, where SW1 acts a
 | Router      | Cisco 1841          |
 | Switch      | Cisco Catalyst 3560 |
 | Switch      | Cisco Catalyst 3560 |
-| End Devices | 2 PCs/Laptops       |
+| End Devices | PCs / Laptops / Phones / TVs |
 
 ---
 
 ## Technologies Implemented
 
-### VLAN Segmentation
-
-Four VLANs were created to separate network traffic and improve management.
+## VLAN Segmentation
 
 | VLAN | Name   | Purpose            |
-| ---- | ------ | ------------------ |
+|------|--------|--------------------|
 | 10   | USERS  | User devices       |
 | 20   | STAFF  | Staff devices      |
-| 30   | MGMT   | Management network |
-| 99   | NATIVE | Native VLAN        |
+| 30   | MGMT   | Network management |
+| 40   | MEDIA  | TVs / streaming    |
+| 50   | VOICE  | IP phones          |
+| 99   | NATIVE | Trunk native VLAN  |
 
 ---
 
-### Router-on-a-Stick (ROAS)
+## Router-on-a-Stick (ROAS)
 
-Inter-VLAN routing is provided by the Cisco 1841 router using 802.1Q subinterfaces.
+Inter-VLAN routing is performed on the Cisco 1841 router using 802.1Q subinterfaces:
 
-Configured subinterfaces:
-
-* Fa0/0.10
-* Fa0/0.20
-* Fa0/0.30
-* Fa0/0.99 (Native VLAN)
-
-This allows devices in different VLANs to communicate through the router.
+- Fa0/0.10 - VLAN 10
+- Fa0/0.20 - VLAN 20
+- Fa0/0.30 - VLAN 30
+- Fa0/0.40 - VLAN 40
+- Fa0/0.50 - VLAN 50
+- Fa0/0.99 - Native VLAN
 
 ---
 
-### DHCP Services
+## DHCP Services
 
-The router provides DHCP services for client VLANs.
+The router provides DHCP for all VLANs.
 
-Configured DHCP pools:
+Each DHCP pool provides:
+- IP address
+- Subnet mask
+- Default gateway
+- DNS servers (8.8.8.8 / 1.1.1.1)
 
-* VLAN 10
-* VLAN 20
-
-Each pool distributes:
-
-* IP Address
-* Subnet Mask
-* Default Gateway
-* DNS Server
+Excluded addresses:
+- Gateway IPs (.1–.20 range)
 
 ---
 
-### Trunking
+## NAT (Internet Access)
 
-802.1Q trunks were configured between:
+Internet access is provided via BT WiFi router.
 
-* R1 ↔ SW1
-* SW1 ↔ SW2
+### NAT Configuration
+
+- PAT (Port Address Translation) enabled
+- Inside VLANs translated to WAN interface IP
+
+### Result
+
+- Internal devices access the internet successfully
+- Verified via ping to 8.8.8.8
+
+---
+
+## Trunking
+
+Trunk links exist between:
+
+- R1 - SW1
+- SW1 - SW2
 
 Allowed VLANs:
-
-```text
-10,20,30,99
-```
+10,20,30,40,50,99
 
 Native VLAN:
-
-```text
 99
-```
+
 
 ---
 
-### EtherChannel (LACP)
+## EtherChannel (LACP)
 
-An EtherChannel bundle was configured between SW1 and SW2 using LACP.
+Configured between SW1 and SW2:
 
-Member Interfaces:
-
-```text
-Fa0/10
-Fa0/12
-```
+- Fa0/10
+- Fa0/12
 
 Benefits:
-
-* Increased bandwidth
-* Redundancy
-* Load balancing
-
-Verification:
-
-```cisco
-show etherchannel summary
-```
+- Increased bandwidth
+- Redundancy
+- Load balancing
 
 ---
 
-### Spanning Tree Protocol (STP)
+## Spanning Tree Protocol (STP)
 
-SW1 was configured as the root bridge for VLANs:
-
-* VLAN 10
-* VLAN 20
-* VLAN 30
-
-This ensures predictable Layer 2 forwarding paths and prevents switching loops.
+- SW1 is the root bridge for VLANs 10, 20, 30
+- PortFast enabled on access ports
+- BPDU Guard enabled for edge protection
 
 ---
 
-### Remote Management
+## Port Security (SW2)
 
-Remote administration was configured using:
+- Sticky MAC learning enabled
+- Max MAC per port: 1 (some ports adjusted to 2)
+- Violation mode: shutdown
+- Errdisable recovery enabled
 
-* Telnet
-* Local user database
-* Privileged EXEC access
+### Issue Encountered
+- MAC address movement triggered psecure-violation
+- Caused interface err-disable state
 
-Management VLAN:
+### Resolution
+- Cleared sticky MAC entries
+- Reset interfaces (shutdown / no shutdown)
+- Adjusted port-security settings
 
-```text
-192.168.30.0/24
-```
+---
 
-Management IP Addresses:
+## Voice & Media VLANs
 
-| Device | Address       |
-| ------ | ------------- |
-| R1     | 192.168.30.1  |
-| SW1    | 192.168.30.11 |
-| SW2    | 192.168.30.12 |
+- VLAN 40 - Media devices (TVs/streaming)
+- VLAN 50 → Voice devices (IP phones)
+
+---
+
+## Power over Ethernet (PoE)
+
+PoE functionality was considered for the Voice VLAN (VLAN 50) to support powered end devices such as IP phones and wireless access points.
+
+PoE-enabled ports were planned for:
+Fa0/14
+Fa0/16
+Fa0/18
+
+These ports are configured for voice devices such as IP phones.
+
+
+## Remote Management
+
+- Telnet enabled (lab use only)
+- Local user authentication
+- Privilege level 15 admin account
+
+---
+
+## Management Network
+
+| Device | IP Address      |
+|--------|----------------|
+| R1     | 192.168.30.1   |
+| SW1    | 192.168.30.11  |
+| SW2    | 192.168.30.12  |
 
 ---
 
 ## IP Addressing Scheme
 
-| VLAN    | Network         | Gateway      |
-| ------- | --------------- | ------------ |
-| VLAN 10 | 192.168.10.0/24 | 192.168.10.1 |
-| VLAN 20 | 192.168.20.0/24 | 192.168.20.1 |
-| VLAN 30 | 192.168.30.0/24 | 192.168.30.1 |
+| VLAN | Network         | Gateway        |
+|------|----------------|----------------|
+| 10   | 192.168.10.0/24 | 192.168.10.1   |
+| 20   | 192.168.20.0/24 | 192.168.20.1   |
+| 30   | 192.168.30.0/24 | 192.168.30.1   |
+| 40   | 192.168.40.0/24 | 192.168.40.1   |
+| 50   | 192.168.50.0/24 | 192.168.50.1   |
 
 ---
 
 ## Verification Commands
 
-### VLANs
-
 ```cisco
 show vlan brief
-```
-
-### Trunking
-
-```cisco
 show interfaces trunk
-```
-
-### EtherChannel
-
-```cisco
 show etherchannel summary
-```
-
-### STP
-
-```cisco
 show spanning-tree
-```
-
-### DHCP
-
-```cisco
 show ip dhcp binding
-```
-
-### Interface Status
-
-```cisco
 show ip interface brief
+show ip nat translations
+show ip nat statistics
 ```
-
----
-
-## Troubleshooting Performed
-
-During implementation, several real-world networking issues were encountered and resolved:
-
-* Native VLAN mismatches
-* EtherChannel compatibility errors
-* Trunk configuration issues
-* VLAN forwarding problems
-* SVI status troubleshooting
-* Inter-VLAN routing verification
-* Telnet authentication configuration
-
-
